@@ -130,18 +130,29 @@
     password.addEventListener("input", validate);
     confirm.addEventListener("input", validate);
 
+    // Two link formats are supported:
+    //  • default Supabase e-mail: …/passwort-zuruecksetzen#access_token=…&refresh_token=…&type=recovery
+    //    (the app requests the reset with the implicit flow)
+    //  • custom e-mail template:  …/passwort-zuruecksetzen?token_hash=…&type=recovery
     async function start() {
-      const params = new URLSearchParams(location.search);
-      const tokenHash = params.get("token_hash");
-      // Remove the one-time token from the address bar and history
+      const query = new URLSearchParams(location.search);
+      const hash = new URLSearchParams(location.hash.slice(1));
+      // Remove one-time tokens from the address bar and history
       history.replaceState(null, "", location.pathname);
 
-      if (!tokenHash || params.get("type") !== "recovery") {
-        show("invalid");
-        return;
+      let error = hash.get("error_code") || hash.get("error") ? { message: "link_error" } : null;
+
+      if (!error && hash.get("access_token") && hash.get("type") === "recovery") {
+        ({ error } = await client.auth.setSession({
+          access_token: hash.get("access_token"),
+          refresh_token: hash.get("refresh_token"),
+        }));
+      } else if (!error && query.get("token_hash") && query.get("type") === "recovery") {
+        ({ error } = await client.auth.verifyOtp({ token_hash: query.get("token_hash"), type: "recovery" }));
+      } else if (!error) {
+        error = { message: "missing_token" };
       }
 
-      const { error } = await client.auth.verifyOtp({ token_hash: tokenHash, type: "recovery" });
       if (error) {
         show("invalid");
         return;
