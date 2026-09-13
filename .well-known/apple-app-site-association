@@ -1,0 +1,16 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["6AY5V43PJ2.Yp.PollyPoll"],
+        "components": [
+          { "/": "/post/*", "comment": "Shared polls" },
+          { "/": "/poll/*", "comment": "Shared polls" }
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["6AY5V43PJ2.Yp.PollyPoll"]
+  }
+}

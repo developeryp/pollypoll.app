@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PollyPoll</title>
+  <meta property="og:title" content="Stimm ab auf PollyPoll 🗳️">
+  <meta property="og:description" content="Jemand möchte deine Meinung wissen.">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="wrap">
+    <header class="nav">
+      <a class="logo" href="/"><span class="logo-mark">📊</span>PollyPoll</a>
+    </header>
+
+    <main class="center">
+      <div class="card" id="poll-card" hidden>
+        <div style="font-size:48px">🗳️</div>
+        <h1>Jemand will deine Meinung</h1>
+        <p>Diese Frage wartet in der PollyPoll-App auf deine Stimme.</p>
+        <div class="actions" style="justify-content:center">
+          <a class="btn btn-primary" id="open-app" href="/">In der App öffnen</a>
+        </div>
+        <p class="note">Noch keine App? PollyPoll ist bald im App Store.</p>
+      </div>
+
+      <div class="card" id="not-found">
+        <div style="font-size:48px">🤔</div>
+        <h1>Seite nicht gefunden</h1>
+        <p>Diese Seite gibt es nicht.</p>
+        <a class="btn btn-ghost" href="/">Zur Startseite</a>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Shared links look like /post/<uuid> or /poll/<uuid>. With the app installed
+    // iOS opens them directly (Universal Links); otherwise this page is shown.
+    const match = location.pathname.match(/^\/(?:post|poll)\/([0-9a-fA-F-]{36})\/?$/);
+    if (match) {
+      document.getElementById("poll-card").hidden = false;
+      document.getElementById("not-found").hidden = true;
+      document.getElementById("open-app").href = "pollypoll://poll/" + match[1];
+      document.title = "Stimm ab auf PollyPoll";
+    }
+  </script>
+</body>
+</html>
