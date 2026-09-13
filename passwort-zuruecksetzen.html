@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
-  <title>Neues Passwort – PollyPoll</title>
+  <title>New password – PollyPoll</title>
   <link rel="stylesheet" href="/style.css">
   <style>
     .form { display: grid; gap: 12px; text-align: left; margin-top: 8px; }
@@ -41,42 +41,42 @@
       <div class="card" style="width:100%">
         <section id="state-loading">
           <div class="spinner" aria-hidden="true"></div>
-          <p>Link wird geprüft …</p>
+          <p>Checking your link …</p>
         </section>
 
         <section id="state-form" hidden>
           <div style="font-size:44px">🔐</div>
-          <h1>Neues Passwort</h1>
-          <p>Wähle ein neues Passwort für dein PollyPoll-Konto.</p>
+          <h1>New password</h1>
+          <p>Choose a new password for your PollyPoll account.</p>
           <form class="form" id="form" novalidate>
-            <label for="password">Neues Passwort</label>
+            <label for="password">New password</label>
             <input id="password" type="password" autocomplete="new-password" required>
             <ul class="rules" id="rules">
-              <li data-rule="length">Mindestens 8 Zeichen</li>
-              <li data-rule="lower">Ein Kleinbuchstabe</li>
-              <li data-rule="upper">Ein Großbuchstabe</li>
-              <li data-rule="digit">Eine Zahl</li>
-              <li data-rule="symbol">Ein Sonderzeichen</li>
+              <li data-rule="length">At least 8 characters</li>
+              <li data-rule="lower">One lowercase letter</li>
+              <li data-rule="upper">One uppercase letter</li>
+              <li data-rule="digit">One number</li>
+              <li data-rule="symbol">One special character</li>
             </ul>
-            <label for="confirm">Passwort wiederholen</label>
+            <label for="confirm">Repeat password</label>
             <input id="confirm" type="password" autocomplete="new-password" required>
             <p class="error" id="form-error" role="alert"></p>
-            <button class="btn btn-primary" id="submit" type="submit" disabled style="justify-content:center">Passwort speichern</button>
+            <button class="btn btn-primary" id="submit" type="submit" disabled style="justify-content:center">Save password</button>
           </form>
         </section>
 
         <section id="state-done" hidden>
           <div style="font-size:44px">✅</div>
-          <h1>Passwort geändert</h1>
-          <p>Öffne PollyPoll und melde dich mit deinem neuen Passwort an.</p>
-          <a class="btn btn-primary" href="pollypoll://">PollyPoll öffnen</a>
+          <h1>Password changed</h1>
+          <p>Open PollyPoll and sign in with your new password.</p>
+          <a class="btn btn-primary" href="pollypoll://">Open PollyPoll</a>
         </section>
 
         <section id="state-invalid" hidden>
           <div style="font-size:44px">⏳</div>
-          <h1>Link ungültig</h1>
-          <p>Dieser Link ist abgelaufen oder wurde schon benutzt. Fordere in der App unter „Passwort vergessen?“ einen neuen an.</p>
-          <a class="btn btn-ghost" href="/">Zur Startseite</a>
+          <h1>Link expired</h1>
+          <p>This link has expired or was already used. Request a new one in the app via “Forgot password?”.</p>
+          <a class="btn btn-ghost" href="/">Back to home</a>
         </section>
       </div>
     </main>
@@ -123,7 +123,7 @@
         allOk = allOk && ok;
       }
       const matches = password.value === confirm.value;
-      formError.textContent = confirm.value && !matches ? "Die Passwörter stimmen nicht überein." : "";
+      formError.textContent = confirm.value && !matches ? "The passwords don’t match." : "";
       submit.disabled = !(allOk && matches);
     }
 
@@ -166,17 +166,17 @@
       if (submit.disabled) return;
 
       submit.disabled = true;
-      submit.textContent = "Wird gespeichert …";
+      submit.textContent = "Saving …";
       formError.textContent = "";
 
       const { error } = await client.auth.updateUser({ password: password.value });
       if (error) {
         formError.textContent = error.code === "weak_password"
-          ? "Das Passwort erfüllt die Anforderungen nicht."
+          ? "The password doesn’t meet the requirements."
           : error.code === "same_password"
-            ? "Bitte wähle ein anderes Passwort als bisher."
-            : "Speichern fehlgeschlagen. Bitte versuche es erneut.";
-        submit.textContent = "Passwort speichern";
+            ? "Please choose a different password than before."
+            : "Couldn’t save your password. Please try again.";
+        submit.textContent = "Save password";
         validate();
         return;
       }
