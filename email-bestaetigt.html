@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>E-Mail bestätigt – PollyPoll</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="wrap">
+    <header class="nav">
+      <a class="logo" href="/"><span class="logo-mark">📊</span>PollyPoll</a>
+    </header>
+
+    <main class="center">
+      <div class="card" style="width:100%">
+        <section id="state-done">
+          <div style="font-size:44px">✅</div>
+          <h1>E-Mail geändert</h1>
+          <p>Deine neue E-Mail-Adresse ist ab sofort aktiv. Öffne PollyPoll, um weiterzumachen.</p>
+          <a class="btn btn-primary" href="pollypoll://">PollyPoll öffnen</a>
+        </section>
+
+        <section id="state-partial" hidden>
+          <div style="font-size:44px">📬</div>
+          <h1>Ein Link fehlt noch</h1>
+          <p>Dieser Link ist bestätigt. Öffne jetzt noch den Link, den wir an deine andere E-Mail-Adresse geschickt haben.</p>
+        </section>
+
+        <section id="state-invalid" hidden>
+          <div style="font-size:44px">⏳</div>
+          <h1>Link ungültig</h1>
+          <p>Dieser Link ist abgelaufen oder wurde schon benutzt. Ändere deine E-Mail in der App unter Einstellungen → Anmeldung &amp; Sicherheit erneut.</p>
+          <a class="btn btn-ghost" href="/">Zur Startseite</a>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Supabase redirects here after an e-mail change link was opened:
+    //  • first of two links (secure e-mail change): #message=Confirmation link accepted…
+    //  • change completed:                          ?code=… or #access_token=…&type=email_change
+    //  • expired or used link:                      #error=…&error_code=…
+    const query = new URLSearchParams(location.search);
+    const hash = new URLSearchParams(location.hash.slice(1));
+    // The URL may carry one-time codes; keep them out of the history
+    history.replaceState(null, "", location.pathname);
+
+    const param = (key) => hash.get(key) ?? query.get(key);
+    const show = (name) => {
+      for (const state of ["done", "partial", "invalid"]) {
+        document.getElementById("state-" + state).hidden = state !== name;
+      }
+    };
+
+    if (param("error") || param("error_code")) {
+      show("invalid");
+    } else if ((param("message") ?? "").toLowerCase().includes("other email")) {
+      show("partial");
+    } else {
+      show("done");
+    }
+  </script>
+</body>
+</html>
