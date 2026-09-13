@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Neues Passwort – PollyPoll</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .form { display: grid; gap: 12px; text-align: left; margin-top: 8px; }
+    .form label { font-weight: 700; font-size: 14px; }
+    .form input {
+      width: 100%;
+      font: inherit;
+      font-size: 17px;
+      padding: 15px 18px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: var(--bg);
+      color: var(--text);
+    }
+    .form input:focus { outline: 2px solid var(--brand); outline-offset: 1px; }
+    .rules { list-style: none; padding: 0; margin: 4px 0 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; font-size: 13px; }
+    .rules li { color: var(--muted); }
+    .rules li.ok { color: var(--yes); }
+    .rules li::before { content: "○ "; }
+    .rules li.ok::before { content: "✓ "; }
+    .error { color: var(--no); font-weight: 600; font-size: 14px; min-height: 1em; }
+    .btn[disabled] { opacity: 0.45; cursor: not-allowed; }
+    .spinner { width: 28px; height: 28px; border: 3px solid var(--line); border-top-color: var(--brand); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 12px auto; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="nav">
+      <a class="logo" href="/"><span class="logo-mark">📊</span>PollyPoll</a>
+    </header>
+
+    <main class="center">
+      <div class="card" style="width:100%">
+        <section id="state-loading">
+          <div class="spinner" aria-hidden="true"></div>
+          <p>Link wird geprüft …</p>
+        </section>
+
+        <section id="state-form" hidden>
+          <div style="font-size:44px">🔐</div>
+          <h1>Neues Passwort</h1>
+          <p>Wähle ein neues Passwort für dein PollyPoll-Konto.</p>
+          <form class="form" id="form" novalidate>
+            <label for="password">Neues Passwort</label>
+            <input id="password" type="password" autocomplete="new-password" required>
+            <ul class="rules" id="rules">
+              <li data-rule="length">Mindestens 8 Zeichen</li>
+              <li data-rule="lower">Ein Kleinbuchstabe</li>
+              <li data-rule="upper">Ein Großbuchstabe</li>
+              <li data-rule="digit">Eine Zahl</li>
+              <li data-rule="symbol">Ein Sonderzeichen</li>
+            </ul>
+            <label for="confirm">Passwort wiederholen</label>
+            <input id="confirm" type="password" autocomplete="new-password" required>
+            <p class="error" id="form-error" role="alert"></p>
+            <button class="btn btn-primary" id="submit" type="submit" disabled style="justify-content:center">Passwort speichern</button>
+          </form>
+        </section>
+
+        <section id="state-done" hidden>
+          <div style="font-size:44px">✅</div>
+          <h1>Passwort geändert</h1>
+          <p>Öffne PollyPoll und melde dich mit deinem neuen Passwort an.</p>
+          <a class="btn btn-primary" href="pollypoll://">PollyPoll öffnen</a>
+        </section>
+
+        <section id="state-invalid" hidden>
+          <div style="font-size:44px">⏳</div>
+          <h1>Link ungültig</h1>
+          <p>Dieser Link ist abgelaufen oder wurde schon benutzt. Fordere in der App unter „Passwort vergessen?“ einen neuen an.</p>
+          <a class="btn btn-ghost" href="/">Zur Startseite</a>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js"
+          integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"
+          crossorigin="anonymous"></script>
+  <script>
+    // The reset e-mail links here with ?token_hash=…&type=recovery
+    // (see supabase/README.md → "Password reset e-mail template").
+    const SUPABASE_URL = "https://nqjenjlgfdrfkazrmgad.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xamVuamxnZmRyZmthenJtZ2FkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkyNDU0MTcsImV4cCI6MjEwNDgyMTQxN30.gUfuWJBHVmfinfzZ8eBc5itnt_R5yvuPGvPIKuoycCo";
+
+    const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    });
+
+    const states = ["loading", "form", "done", "invalid"];
+    function show(name) {
+      for (const state of states) {
+        document.getElementById("state-" + state).hidden = state !== name;
+      }
+    }
+
+    const rules = {
+      length: (p) => p.length >= 8,
+      lower: (p) => /\p{Ll}/u.test(p),
+      upper: (p) => /\p{Lu}/u.test(p),
+      digit: (p) => /\p{N}/u.test(p),
+      symbol: (p) => /[^\p{L}\p{N}\s]/u.test(p),
+    };
+
+    const password = document.getElementById("password");
+    const confirm = document.getElementById("confirm");
+    const submit = document.getElementById("submit");
+    const formError = document.getElementById("form-error");
+
+    function validate() {
+      let allOk = true;
+      for (const item of document.querySelectorAll("#rules li")) {
+        const ok = rules[item.dataset.rule](password.value);
+        item.classList.toggle("ok", ok);
+        allOk = allOk && ok;
+      }
+      const matches = password.value === confirm.value;
+      formError.textContent = confirm.value && !matches ? "Die Passwörter stimmen nicht überein." : "";
+      submit.disabled = !(allOk && matches);
+    }
+
+    password.addEventListener("input", validate);
+    confirm.addEventListener("input", validate);
+
+    async function start() {
+      const params = new URLSearchParams(location.search);
+      const tokenHash = params.get("token_hash");
+      // Remove the one-time token from the address bar and history
+      history.replaceState(null, "", location.pathname);
+
+      if (!tokenHash || params.get("type") !== "recovery") {
+        show("invalid");
+        return;
+      }
+
+      const { error } = await client.auth.verifyOtp({ token_hash: tokenHash, type: "recovery" });
+      if (error) {
+        show("invalid");
+        return;
+      }
+      show("form");
+      password.focus();
+    }
+
+    document.getElementById("form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (submit.disabled) return;
+
+      submit.disabled = true;
+      submit.textContent = "Wird gespeichert …";
+      formError.textContent = "";
+
+      const { error } = await client.auth.updateUser({ password: password.value });
+      if (error) {
+        formError.textContent = error.code === "weak_password"
+          ? "Das Passwort erfüllt die Anforderungen nicht."
+          : error.code === "same_password"
+            ? "Bitte wähle ein anderes Passwort als bisher."
+            : "Speichern fehlgeschlagen. Bitte versuche es erneut.";
+        submit.textContent = "Passwort speichern";
+        validate();
+        return;
+      }
+
+      await client.auth.signOut();
+      show("done");
+    });
+
+    start();
+  </script>
+</body>
+</html>
